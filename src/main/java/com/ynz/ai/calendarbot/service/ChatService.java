@@ -1,5 +1,7 @@
 package com.ynz.ai.calendarbot.service;
 
+    import com.ynz.ai.calendarbot.service.dto.AppointmentRequest;
+    import lombok.RequiredArgsConstructor;
     import org.springframework.ai.chat.client.ChatClient;
     import org.springframework.ai.chat.model.ChatResponse;
     import org.springframework.stereotype.Service;
@@ -8,15 +10,11 @@ package com.ynz.ai.calendarbot.service;
     import java.time.LocalTime;
 
 @Service
+@RequiredArgsConstructor
     public class ChatService {
 
         private final ChatClient chatClient;
         private final AppointmentService appointmentService;
-
-        public ChatService(ChatClient chatClient, AppointmentService appointmentService) {
-            this.chatClient = chatClient;
-            this.appointmentService = appointmentService;
-        }
 
         public String handleUserMessage(String message) {
             // Step 1: Ask LLM to extract intent

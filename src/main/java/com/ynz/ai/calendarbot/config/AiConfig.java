@@ -12,8 +12,6 @@ public class AiConfig {
     public ChatClient chatClient(OpenAiChatModel model) {
         return ChatClient.builder(model)
                 .defaultSystem("You are a dental appointment assistant.")
-                // Keep last 5 messages (user + bot)
-                //.defaultMemory(new SlidingWindowMemoryStore(5))
                 .build();
     }
 }
