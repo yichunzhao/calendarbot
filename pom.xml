@@ -45,6 +45,11 @@
             <version>2.5.0</version>
         </dependency>
         <dependency>
+            <groupId>org.webjars</groupId>
+            <artifactId>swagger-ui</artifactId>
+            <version>5.13.0</version> <!-- Use the latest safe version -->
+        </dependency>
+        <dependency>
             <groupId>org.hibernate.validator</groupId>
             <artifactId>hibernate-validator</artifactId>
             <version>8.0.1.Final</version>
