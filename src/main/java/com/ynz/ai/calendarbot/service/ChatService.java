@@ -5,6 +5,8 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.ai.chat.client.ChatClient;
 import org.springframework.stereotype.Service;
 
+import java.time.LocalDate;
+
 @Service
 @RequiredArgsConstructor
 public class ChatService {
@@ -14,12 +16,24 @@ public class ChatService {
 
     public String handleUserMessage(String message) {
         // Step 1: Ask LLM to extract intent
+        String today = LocalDate.now().toString(); // e.g. "2025-10-12"
+
+        String systemPrompt = String.format("""
+                You are an intelligent scheduling assistant.
+                Today is %s.
+                When parsing relative dates like "next Monday", interpret them based on this date.
+                Extract appointment details in JSON format:
+                {
+                  "clientName": "",
+                  "clientContact": "",
+                  "service": "",
+                  "date": "YYYY-MM-DD",
+                  "time": "HH:MM"
+                }
+                """, today);
+
         AppointmentRequest appointmentRequest = chatClient.prompt()
-                .system("""
-                        You are an assistant that helps schedule appointments.
-                        Extract the following details in JSON format:
-                        clientName, clientContact, service, date (YYYY-MM-DD), time (HH:MM).
-                        """)
+                .system(systemPrompt)
                 .user(message)
                 .call()
                 .entity(AppointmentRequest.class);             // RETURNS AppointmentRequest
