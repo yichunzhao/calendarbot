@@ -123,4 +123,23 @@ After starting the app, open:
 - Richer schema extraction and validation
 
 ## License
-No license specified. Add a LICENSE file if you plan to distribute.
+
+This project is licensed under the **MIT License** — see [LICENSE](LICENSE) file for details.
+
+To define a license for your project:
+
+1. **Add a LICENSE file** in the root directory (e.g., `LICENSE` or `LICENSE.txt`)
+   - Common choices: MIT, Apache 2.0, GPL v3, BSD 3-Clause
+   - See [choosealicense.com](https://choosealicense.com) for comparisons
+
+2. **Reference in pom.xml** (optional but recommended):
+   ```xml
+   <licenses>
+       <license>
+           <name>MIT License</name>
+           <url>https://opensource.org/licenses/MIT</url>
+       </license>
+   </licenses>
+   ```
+
+3. **Add to README.md** (this section) with a link to your LICENSE file
