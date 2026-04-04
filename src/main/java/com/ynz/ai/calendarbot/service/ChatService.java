@@ -6,6 +6,7 @@ import org.springframework.ai.chat.client.ChatClient;
 import org.springframework.stereotype.Service;
 
 import java.time.LocalDate;
+import java.util.Objects;
 
 @Service
 @RequiredArgsConstructor
@@ -39,7 +40,7 @@ public class ChatService {
                 .entity(AppointmentRequest.class);             // RETURNS AppointmentRequest
 
         // Step 2: Check availability & book appointment via clinic system
-        boolean available = appointmentService.isSlotAvailable(appointmentRequest.getDate(), appointmentRequest.getTime());
+        boolean available = appointmentService.isSlotAvailable(Objects.requireNonNull(appointmentRequest).getDate(), appointmentRequest.getTime());
 
         if (available) {
             appointmentService.bookAppointment(appointmentRequest);

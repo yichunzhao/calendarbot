@@ -4,6 +4,7 @@ AI-powered appointment scheduling bot built with Spring Boot and Spring AI. User
 
 ## Features
 - Natural language appointment requests via a single POST /chat endpoint
+- Interactive terminal mode via Spring Shell (`chat "..."`)
 - LLM-powered extraction of client name, contact, service, date, and time
 - Simple in-memory availability checking and booking
 - OpenAPI/Swagger UI for easy exploration
@@ -29,17 +30,21 @@ AI-powered appointment scheduling bot built with Spring Boot and Spring AI. User
      ```
 
 3) Run the application (choose one):
-   - Option A (recommended during development):
+   - REST API mode (default):
      ```bash
      mvn spring-boot:run
      ```
-   - Option B (build a runnable jar):
+   - CLI mode (Spring Shell):
+     ```bash
+     mvn spring-boot:run -Dspring-boot.run.profiles=cli
+     ```
+   - Packaged jar with explicit profile:
      ```bash
      mvn clean package -DskipTests
-     java -jar target/calendarbot-1.0-SNAPSHOT.jar
+     java -jar target/calendarbot-1.0-SNAPSHOT.jar --spring.profiles.active=cli
      ```
 
-4) The app starts on http://localhost:8080 by default.
+4) In REST mode, the app starts on http://localhost:8080 by default.
 
 ## Configuration
 Configured in `src/main/resources/application.properties`:
@@ -76,6 +81,14 @@ If the slot is taken:
 ⚠️ That slot is not available. Please choose another time.
 ```
 
+## CLI Reference (Spring Shell)
+- Start with profile `cli`
+- Run command:
+  ```text
+  chat "Book a dental cleaning for Alice Smith on 2025-12-01 at 10:30. Contact 555-0199."
+  ```
+- Built-in commands: `help`, `history`, `exit`
+
 ## Swagger/OpenAPI
 After starting the app, open:
 - Swagger UI: http://localhost:8080/swagger-ui/index.html
@@ -84,6 +97,7 @@ After starting the app, open:
 ## How it Works (Architecture)
 - `AiConfig` — wires Spring AI `ChatClient` with a system prompt for a dental appointment assistant.
 - `ChatController` — exposes POST `/chat` to accept a free-form message.
+- `ChatShellCommands` — exposes `chat` command for terminal interaction in `cli` profile.
 - `ChatService` — prompts the LLM to extract an `AppointmentRequest` (clientName, clientContact, service, date, time), checks availability, and books the slot.
 - `AppointmentService` — abstraction for availability and booking.
 - `InMemoryAppointmentService` — stores booked times per date in memory (resets on restart).

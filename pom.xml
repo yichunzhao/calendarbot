@@ -32,6 +32,7 @@
         <lombok.version>1.18.38</lombok.version>
         <commons-lang3.version>3.18.0</commons-lang3.version>
         <logback.version>1.5.19</logback.version>
+        <spring-shell.version>3.3.3</spring-shell.version>
     </properties>
 
     <dependencies>
@@ -59,6 +60,13 @@
         <dependency>
             <groupId>org.springframework.boot</groupId>
             <artifactId>spring-boot-starter-validation</artifactId>
+        </dependency>
+
+        <!-- Spring Shell for terminal-based interaction -->
+        <dependency>
+            <groupId>org.springframework.shell</groupId>
+            <artifactId>spring-shell-starter</artifactId>
+            <version>${spring-shell.version}</version>
         </dependency>
 
         <!-- SpringDoc OpenAPI for Swagger 3.0 documentation -->
@@ -107,7 +115,7 @@
                 <groupId>org.springframework.boot</groupId>
                 <artifactId>spring-boot-maven-plugin</artifactId>
                 <configuration>
-                    <mainClass>com.ynz.ai.calendarbot.CalendarBotApplication</mainClass>
+                    <mainClass>com.ynz.ai.calendarbot.CalendarBot</mainClass>
                 </configuration>
             </plugin>
 

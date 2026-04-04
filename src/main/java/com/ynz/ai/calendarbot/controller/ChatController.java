@@ -2,6 +2,7 @@ package com.ynz.ai.calendarbot.controller;
 
 import com.ynz.ai.calendarbot.service.ChatService;
 import lombok.RequiredArgsConstructor;
+import org.springframework.context.annotation.Profile;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
@@ -11,6 +12,7 @@ import org.springframework.web.bind.annotation.RestController;
 @RestController
 @RequestMapping("/chat")
 @RequiredArgsConstructor
+@Profile("!cli")
 public class ChatController {
 
     private final ChatService chatService;
