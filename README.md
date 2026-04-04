@@ -3,8 +3,8 @@
 AI-powered appointment scheduling bot built with Spring Boot and Spring AI. Users send natural language messages (e.g., "Book a cleaning for John on 2025-11-20 at 14:30"), and the bot extracts structured details, checks availability, and books the slot using an in-memory store.
 
 ## Features
-- Natural language appointment requests via a single POST /chat endpoint
-- Interactive terminal mode via Spring Shell (`chat "..."`)
+- Natural language appointment requests via POST /chat REST endpoint
+- Interactive terminal mode with natural language input (no command syntax needed)
 - LLM-powered extraction of client name, contact, service, date, and time
 - Simple in-memory availability checking and booking
 - OpenAPI/Swagger UI for easy exploration
@@ -34,17 +34,19 @@ AI-powered appointment scheduling bot built with Spring Boot and Spring AI. User
      ```bash
      mvn spring-boot:run
      ```
-   - CLI mode (Spring Shell):
+   - CLI mode (interactive natural language):
      ```bash
-     mvn spring-boot:run -Dspring-boot.run.profiles=cli
+     set SPRING_PROFILES_ACTIVE=cli
+     mvn spring-boot:run
      ```
-   - Packaged jar with explicit profile:
+   - Packaged jar with CLI profile:
      ```bash
      mvn clean package -DskipTests
      java -jar target/calendarbot-1.0-SNAPSHOT.jar --spring.profiles.active=cli
      ```
 
 4) In REST mode, the app starts on http://localhost:8080 by default.
+   In CLI mode, you'll see an interactive prompt.
 
 ## Configuration
 Configured in `src/main/resources/application.properties`:
@@ -81,13 +83,37 @@ If the slot is taken:
 ⚠️ That slot is not available. Please choose another time.
 ```
 
-## CLI Reference (Spring Shell)
-- Start with profile `cli`
-- Run command:
-  ```text
-  chat "Book a dental cleaning for Alice Smith on 2025-12-01 at 10:30. Contact 555-0199."
-  ```
-- Built-in commands: `help`, `history`, `exit`
+## CLI Reference
+Start the app in CLI mode and interact with natural language directly:
+
+```bash
+set SPRING_PROFILES_ACTIVE=cli
+mvn spring-boot:run
+```
+
+Example interaction:
+```
+╔══════════════════════════════════════════╗
+║      🦷  CalendarBot  CLI  v1.0          ║
+║  Just type your request naturally.       ║
+║  Type 'exit' to quit.                    ║
+╚══════════════════════════════════════════╝
+
+calendarbot:> book a dental cleaning for Alice on 2026-04-10 at 10:00
+⏳ Thinking...
+✅ Your appointment is scheduled for 2026-04-10 at 10:00
+
+calendarbot:> make an appointment tomorrow at 15:00 for John
+⏳ Thinking...
+✅ Your appointment is scheduled for 2026-04-05 at 15:00
+
+calendarbot:> exit
+Goodbye! 👋
+```
+
+Commands:
+- Type any natural language appointment request
+- Type `exit` or `quit` to close
 
 ## Swagger/OpenAPI
 After starting the app, open:
@@ -96,8 +122,8 @@ After starting the app, open:
 
 ## How it Works (Architecture)
 - `AiConfig` — wires Spring AI `ChatClient` with a system prompt for a dental appointment assistant.
-- `ChatController` — exposes POST `/chat` to accept a free-form message.
-- `ChatShellCommands` — exposes `chat` command for terminal interaction in `cli` profile.
+- `ChatController` — exposes POST `/chat` endpoint for REST API interaction.
+- `CliRunner` — manages interactive terminal mode with natural language input in `cli` profile.
 - `ChatService` — prompts the LLM to extract an `AppointmentRequest` (clientName, clientContact, service, date, time), checks availability, and books the slot.
 - `AppointmentService` — abstraction for availability and booking.
 - `InMemoryAppointmentService` — stores booked times per date in memory (resets on restart).
