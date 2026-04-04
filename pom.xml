@@ -25,15 +25,52 @@
         <maven.compiler.target>${java.version}</maven.compiler.target>
         <spring-ai.version>1.0.3</spring-ai.version>
         <!-- Dependency versions for security and compatibility -->
-        <jackson.version>2.18.0</jackson.version>
+        <!-- Upgraded to 2.21.1 to fix GHSA-72hv-8253-57qq (DoS via async parser number length bypass) -->
+        <jackson.version>2.21.1</jackson.version>
         <swagger-ui.version>5.17.0</swagger-ui.version>
         <springdoc-openapi.version>2.7.0</springdoc-openapi.version>
         <hibernate-validator.version>8.0.1.Final</hibernate-validator.version>
         <lombok.version>1.18.38</lombok.version>
         <commons-lang3.version>3.18.0</commons-lang3.version>
-        <logback.version>1.5.19</logback.version>
+        <!-- Upgrade logback to fix CVE-2026-1225: class instantiation via config file -->
+        <logback.version>1.5.25</logback.version>
+        <!-- Upgrade assertj-core to fix CVE-2026-24400: XXE vulnerability in XmlStringPrettyFormatter -->
+        <assertj.version>3.27.7</assertj.version>
+        <!-- Upgrade Tomcat to fix CVE-2025-55752, CVE-2025-55754, CVE-2026-24733, CVE-2026-24734 and more -->
+        <tomcat.version>10.1.52</tomcat.version>
+        <!-- Override Spring Framework to fix CVE-2026-22735 and CVE-2026-22737 if patched 6.2.x is available -->
+        <spring-framework.version>6.2.17</spring-framework.version>
+        <commons-io.version>2.14.0</commons-io.version>
         <spring-shell.version>3.3.3</spring-shell.version>
     </properties>
+
+    <dependencyManagement>
+        <dependencies>
+            <!-- Force logback upgrade to fix CVE-2026-1225 -->
+            <dependency>
+                <groupId>ch.qos.logback</groupId>
+                <artifactId>logback-core</artifactId>
+                <version>${logback.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>ch.qos.logback</groupId>
+                <artifactId>logback-classic</artifactId>
+                <version>${logback.version}</version>
+            </dependency>
+            <!-- Force jackson-core upgrade to fix GHSA-72hv-8253-57qq (DoS via async parser number length bypass) -->
+            <dependency>
+                <groupId>com.fasterxml.jackson.core</groupId>
+                <artifactId>jackson-core</artifactId>
+                <version>${jackson.version}</version>
+            </dependency>
+            <!-- Force assertj-core upgrade to fix CVE-2026-24400: XXE in XmlStringPrettyFormatter -->
+            <dependency>
+                <groupId>org.assertj</groupId>
+                <artifactId>assertj-core</artifactId>
+                <version>${assertj.version}</version>
+            </dependency>
+        </dependencies>
+    </dependencyManagement>
 
     <dependencies>
         <!-- Spring Boot Web Starter (includes Spring Core, Web, and embedded Tomcat) -->
@@ -47,6 +84,13 @@
         <dependency>
             <groupId>com.fasterxml.jackson.core</groupId>
             <artifactId>jackson-databind</artifactId>
+            <version>${jackson.version}</version>
+        </dependency>
+
+        <!-- Jackson Core - Explicit pin to fix GHSA-72hv-8253-57qq (overrides transitive from spring-ai) -->
+        <dependency>
+            <groupId>com.fasterxml.jackson.core</groupId>
+            <artifactId>jackson-core</artifactId>
             <version>${jackson.version}</version>
         </dependency>
 
@@ -76,6 +120,14 @@
             <version>${springdoc-openapi.version}</version>
         </dependency>
 
+        <!-- Apache Commons IO - Force upgrade to fix CVE-2024-47554 (DoS via XmlStreamReader) -->
+        <!-- Pulled in transitively by spring-shell-starter -->
+        <dependency>
+            <groupId>commons-io</groupId>
+            <artifactId>commons-io</artifactId>
+            <version>${commons-io.version}</version>
+        </dependency>
+
         <!-- Apache Commons Lang 3 - Force latest version to fix CVE-2025-48924 -->
         <!-- Fixes: Uncontrolled Recursion vulnerability in ClassUtils.getClass() -->
         <dependency>
@@ -83,7 +135,6 @@
             <artifactId>commons-lang3</artifactId>
             <version>${commons-lang3.version}</version>
         </dependency>
-
 
         <!-- Swagger UI WebJars - Latest secure version -->
         <dependency>
@@ -104,6 +155,15 @@
         <dependency>
             <groupId>org.springframework.boot</groupId>
             <artifactId>spring-boot-starter-test</artifactId>
+            <scope>test</scope>
+        </dependency>
+
+        <!-- AssertJ Core - Explicit pin to fix CVE-2026-24400 (XXE in XmlStringPrettyFormatter) -->
+        <!-- Overrides transitive version pulled in by spring-boot-starter-test -->
+        <dependency>
+            <groupId>org.assertj</groupId>
+            <artifactId>assertj-core</artifactId>
+            <version>${assertj.version}</version>
             <scope>test</scope>
         </dependency>
     </dependencies>
