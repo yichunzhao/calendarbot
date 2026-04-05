@@ -43,5 +43,27 @@ class InMemoryAppointmentServiceTest {
 
         assertFalse(service.isSlotAvailable(date, time));
     }
+
+    @Test
+    void cancelAppointmentRemovesMatchingEntryAndSlotBecomesAvailable() {
+        InMemoryAppointmentService service = new InMemoryAppointmentService();
+        LocalDate date = LocalDate.of(2026, 4, 10);
+        LocalTime time = LocalTime.of(10, 0);
+
+        service.bookAppointment(new AppointmentRequest("BOOK", "Alice", "alice@mail.com", "Cleaning", date, time));
+
+        boolean removed = service.cancelAppointment("Alice", "alice@mail.com", date, time);
+
+        assertTrue(removed);
+        assertTrue(service.listAppointmentsForUser("Alice", "alice@mail.com").isEmpty());
+        assertTrue(service.isSlotAvailable(date, time), "Slot should be free again after cancellation");
+    }
+
+    @Test
+    void cancelAppointmentReturnsFalseWhenNotFound() {
+        InMemoryAppointmentService service = new InMemoryAppointmentService();
+        boolean removed = service.cancelAppointment("Nobody", "", LocalDate.of(2026, 1, 1), LocalTime.of(9, 0));
+        assertFalse(removed);
+    }
 }
 

@@ -35,6 +35,15 @@ public class InMemoryAppointmentService implements AppointmentService {
                 .toList();
     }
 
+    @Override
+    public boolean cancelAppointment(String clientName, String clientContact,
+                                     LocalDate date, LocalTime time) {
+        return appointments.removeIf(a ->
+                matchesIdentity(a, clientName, clientContact)
+                        && date.equals(a.getDate())
+                        && time.equals(a.getTime()));
+    }
+
     private boolean matchesIdentity(AppointmentRequest appointment, String clientName, String clientContact) {
         boolean hasContact = !isBlank(clientContact);
         if (hasContact) {

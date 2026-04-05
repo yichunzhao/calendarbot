@@ -12,4 +12,6 @@ public interface AppointmentService {
     void bookAppointment(AppointmentRequest request);
 
     List<AppointmentRequest> listAppointmentsForUser(String clientName, String clientContact);
+
+    boolean cancelAppointment(String clientName, String clientContact, java.time.LocalDate date, java.time.LocalTime time);
 }

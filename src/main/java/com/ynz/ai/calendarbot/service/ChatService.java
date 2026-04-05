@@ -27,7 +27,7 @@ public class ChatService {
 
                 Return JSON with this schema:
                 {
-                  "intent": "BOOK" | "LIST",
+                  "intent": "BOOK" | "LIST" | "DELETE",
                   "clientName": "",
                   "clientContact": "",
                   "service": "",
@@ -37,9 +37,11 @@ public class ChatService {
 
                 Rules:
                 - Use intent LIST for requests like "show/list my appointments".
-                - Use intent BOOK for scheduling requests.
+                - Use intent BOOK for scheduling/booking requests.
+                - Use intent DELETE for requests like "cancel/delete/remove my appointment".
                 - For LIST, include clientName/clientContact when available from the user message.
                 - For BOOK, fill all fields.
+                - For DELETE, include clientName/clientContact, date, and time.
                 """, today);
 
         AppointmentRequest request = chatClient.prompt()
@@ -55,6 +57,9 @@ public class ChatService {
         String intent = normalizeIntent(request.getIntent());
         if ("LIST".equals(intent)) {
             return handleListIntent(request);
+        }
+        if ("DELETE".equals(intent)) {
+            return handleDeleteIntent(request);
         }
 
         return handleBookIntent(request);
@@ -104,6 +109,25 @@ public class ChatService {
         }
 
         return response.toString().trim();
+    }
+
+    private String handleDeleteIntent(AppointmentRequest request) {
+        if (isBlank(request.getClientName()) && isBlank(request.getClientContact())) {
+            return "Please include your name or contact to cancel an appointment.";
+        }
+        if (request.getDate() == null || request.getTime() == null) {
+            return "Please provide the date and time of the appointment to cancel.";
+        }
+
+        boolean removed = appointmentService.cancelAppointment(
+                request.getClientName(), request.getClientContact(),
+                request.getDate(), request.getTime());
+
+        if (removed) {
+            return "Your appointment on " + request.getDate() + " at " + request.getTime() + " has been cancelled.";
+        }
+        return "No matching appointment found for " + identityLabel(request)
+                + " on " + request.getDate() + " at " + request.getTime() + ".";
     }
 
     private String normalizeIntent(String intent) {
