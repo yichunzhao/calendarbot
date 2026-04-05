@@ -45,19 +45,19 @@ public class InMemoryAppointmentService implements AppointmentService {
     }
 
     private boolean matchesIdentity(AppointmentRequest appointment, String clientName, String clientContact) {
-        boolean hasContact = !isBlank(clientContact);
+        boolean hasContact = isNotBlank(clientContact);
         if (hasContact) {
             return clientContact.equalsIgnoreCase(appointment.getClientContact());
         }
 
-        if (!isBlank(clientName)) {
+        if (isNotBlank(clientName)) {
             return clientName.equalsIgnoreCase(appointment.getClientName());
         }
 
         return false;
     }
 
-    private boolean isBlank(String value) {
-        return value == null || value.isBlank();
+    private boolean isNotBlank(String value) {
+        return value != null && !value.isBlank();
     }
 }
