@@ -51,10 +51,10 @@ public class CliRunner implements ApplicationRunner {
         System.out.println("""
                 ╔══════════════════════════════════════════╗
                 ║      🦷  CalendarBot  CLI  v1.0          ║
-                ║  Just type your request naturally.       ║
+                ║  Type naturally to book appointments.    ║
+                ║  You can also say: list my appointments. ║
                 ║  Type 'exit' to quit.                    ║
                 ╚══════════════════════════════════════════╝
                 """);
     }
 }
-

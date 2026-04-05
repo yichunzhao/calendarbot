@@ -6,6 +6,8 @@ import org.springframework.ai.chat.client.ChatClient;
 import org.springframework.stereotype.Service;
 
 import java.time.LocalDate;
+import java.util.List;
+import java.util.Locale;
 import java.util.Objects;
 
 @Service
@@ -16,37 +18,109 @@ public class ChatService {
     private final AppointmentService appointmentService;
 
     public String handleUserMessage(String message) {
-        // Step 1: Ask LLM to extract intent
-        String today = LocalDate.now().toString(); // e.g. "2025-10-12"
+        String today = LocalDate.now().toString();
 
         String systemPrompt = String.format("""
                 You are an intelligent scheduling assistant.
                 Today is %s.
                 When parsing relative dates like "next Monday", interpret them based on this date.
-                Extract appointment details in JSON format:
+
+                Return JSON with this schema:
                 {
+                  "intent": "BOOK" | "LIST",
                   "clientName": "",
                   "clientContact": "",
                   "service": "",
                   "date": "YYYY-MM-DD",
                   "time": "HH:MM"
                 }
+
+                Rules:
+                - Use intent LIST for requests like "show/list my appointments".
+                - Use intent BOOK for scheduling requests.
+                - For LIST, include clientName/clientContact when available from the user message.
+                - For BOOK, fill all fields.
                 """, today);
 
-        AppointmentRequest appointmentRequest = chatClient.prompt()
+        AppointmentRequest request = chatClient.prompt()
                 .system(systemPrompt)
                 .user(message)
                 .call()
-                .entity(AppointmentRequest.class);             // RETURNS AppointmentRequest
+                .entity(AppointmentRequest.class);
 
-        // Step 2: Check availability & book appointment via clinic system
-        boolean available = appointmentService.isSlotAvailable(Objects.requireNonNull(appointmentRequest).getDate(), appointmentRequest.getTime());
-
-        if (available) {
-            appointmentService.bookAppointment(appointmentRequest);
-            return "✅ Your appointment is scheduled for " + appointmentRequest.getDate() + " at " + appointmentRequest.getTime();
-        } else {
-            return "⚠️ That slot is not available. Please choose another time.";
+        if (request == null) {
+            return "I could not understand your request. Please try again.";
         }
+
+        String intent = normalizeIntent(request.getIntent());
+        if ("LIST".equals(intent)) {
+            return handleListIntent(request);
+        }
+
+        return handleBookIntent(request);
+    }
+
+    private String handleBookIntent(AppointmentRequest request) {
+        if (request.getDate() == null || request.getTime() == null) {
+            return "Please provide date and time for the appointment.";
+        }
+
+        boolean available = appointmentService.isSlotAvailable(
+                Objects.requireNonNull(request.getDate()),
+                request.getTime());
+
+        if (!available) {
+            return "That slot is not available. Please choose another time.";
+        }
+
+        request.setIntent("BOOK");
+        appointmentService.bookAppointment(request);
+        return "Your appointment is scheduled for " + request.getDate() + " at " + request.getTime();
+    }
+
+    private String handleListIntent(AppointmentRequest request) {
+        if (isBlank(request.getClientName()) && isBlank(request.getClientContact())) {
+            return "Please include your name or contact so I can find your appointments.";
+        }
+
+        List<AppointmentRequest> appointments = appointmentService
+                .listAppointmentsForUser(request.getClientName(), request.getClientContact());
+
+        if (appointments.isEmpty()) {
+            return "No appointments found for " + identityLabel(request) + ".";
+        }
+
+        StringBuilder response = new StringBuilder("Appointments for " + identityLabel(request) + ":\n");
+        for (int i = 0; i < appointments.size(); i++) {
+            AppointmentRequest appointment = appointments.get(i);
+            response.append(i + 1)
+                    .append(") ")
+                    .append(appointment.getDate())
+                    .append(" ")
+                    .append(appointment.getTime())
+                    .append(" - ")
+                    .append(appointment.getService())
+                    .append("\n");
+        }
+
+        return response.toString().trim();
+    }
+
+    private String normalizeIntent(String intent) {
+        if (isBlank(intent)) {
+            return "BOOK";
+        }
+        return intent.trim().toUpperCase(Locale.ROOT);
+    }
+
+    private String identityLabel(AppointmentRequest request) {
+        if (!isBlank(request.getClientName())) {
+            return request.getClientName();
+        }
+        return request.getClientContact();
+    }
+
+    private boolean isBlank(String value) {
+        return value == null || value.isBlank();
     }
 }

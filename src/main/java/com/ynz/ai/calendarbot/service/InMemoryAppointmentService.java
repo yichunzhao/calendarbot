@@ -6,25 +6,49 @@ import org.springframework.stereotype.Service;
 
 import java.time.LocalDate;
 import java.time.LocalTime;
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.Map;
-import java.util.Set;
+import java.util.ArrayList;
+import java.util.Comparator;
+import java.util.List;
 
 @Service
 public class InMemoryAppointmentService implements AppointmentService {
-    private final Map<LocalDate, Set<LocalTime>> appointments = new HashMap<>();
+
+    private final List<AppointmentRequest> appointments = new ArrayList<>();
 
     @Override
     public boolean isSlotAvailable(LocalDate date, LocalTime time) {
-        return !appointments.getOrDefault(date, Collections.emptySet()).contains(time);
+        return appointments.stream()
+                .noneMatch(a -> date.equals(a.getDate()) && time.equals(a.getTime()));
     }
 
     @Override
     public void bookAppointment(AppointmentRequest request) {
-        appointments
-            .computeIfAbsent(request.getDate(), d -> new HashSet<>())
-            .add(request.getTime());
+        appointments.add(request);
+    }
+
+    @Override
+    public List<AppointmentRequest> listAppointmentsForUser(String clientName, String clientContact) {
+        return appointments.stream()
+                .filter(a -> matchesIdentity(a, clientName, clientContact))
+                .sorted(Comparator.comparing(AppointmentRequest::getDate)
+                        .thenComparing(AppointmentRequest::getTime))
+                .toList();
+    }
+
+    private boolean matchesIdentity(AppointmentRequest appointment, String clientName, String clientContact) {
+        boolean hasContact = !isBlank(clientContact);
+        if (hasContact) {
+            return clientContact.equalsIgnoreCase(appointment.getClientContact());
+        }
+
+        if (!isBlank(clientName)) {
+            return clientName.equalsIgnoreCase(appointment.getClientName());
+        }
+
+        return false;
+    }
+
+    private boolean isBlank(String value) {
+        return value == null || value.isBlank();
     }
 }

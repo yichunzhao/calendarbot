@@ -16,6 +16,9 @@ import java.time.LocalTime;
 @AllArgsConstructor
 public class AppointmentRequest implements Serializable {
 
+    // BOOK or LIST; defaults to BOOK when omitted.
+    private String intent;
+
     @NotBlank
     private String clientName;
 
