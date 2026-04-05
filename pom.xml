@@ -46,6 +46,15 @@
 
     <dependencyManagement>
         <dependencies>
+            <!-- Import Jackson BOM to align ALL jackson modules to the same version -->
+            <!-- Fixes GHSA-72hv-8253-57qq: async parser number length bypass (jackson-core) -->
+            <dependency>
+                <groupId>com.fasterxml.jackson</groupId>
+                <artifactId>jackson-bom</artifactId>
+                <version>${jackson.version}</version>
+                <type>pom</type>
+                <scope>import</scope>
+            </dependency>
             <!-- Force logback upgrade to fix CVE-2026-1225 -->
             <dependency>
                 <groupId>ch.qos.logback</groupId>
@@ -56,12 +65,6 @@
                 <groupId>ch.qos.logback</groupId>
                 <artifactId>logback-classic</artifactId>
                 <version>${logback.version}</version>
-            </dependency>
-            <!-- Force jackson-core upgrade to fix GHSA-72hv-8253-57qq (DoS via async parser number length bypass) -->
-            <dependency>
-                <groupId>com.fasterxml.jackson.core</groupId>
-                <artifactId>jackson-core</artifactId>
-                <version>${jackson.version}</version>
             </dependency>
             <!-- Force assertj-core upgrade to fix CVE-2026-24400: XXE in XmlStringPrettyFormatter -->
             <dependency>
@@ -77,21 +80,6 @@
         <dependency>
             <groupId>org.springframework.boot</groupId>
             <artifactId>spring-boot-starter-web</artifactId>
-        </dependency>
-
-        <!-- Jackson Databind - Pinned to latest stable version for security -->
-        <!-- Addresses: CVE-2020-36518, XXE attacks, and deserialization vulnerabilities -->
-        <dependency>
-            <groupId>com.fasterxml.jackson.core</groupId>
-            <artifactId>jackson-databind</artifactId>
-            <version>${jackson.version}</version>
-        </dependency>
-
-        <!-- Jackson Core - Explicit pin to fix GHSA-72hv-8253-57qq (overrides transitive from spring-ai) -->
-        <dependency>
-            <groupId>com.fasterxml.jackson.core</groupId>
-            <artifactId>jackson-core</artifactId>
-            <version>${jackson.version}</version>
         </dependency>
 
         <!-- Spring AI OpenAI Starter -->
