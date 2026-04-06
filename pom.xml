@@ -23,7 +23,7 @@
         <maven.compiler.release>${java.version}</maven.compiler.release>
         <maven.compiler.source>${java.version}</maven.compiler.source>
         <maven.compiler.target>${java.version}</maven.compiler.target>
-        <spring-ai.version>1.0.3</spring-ai.version>
+        <spring-ai.version>1.1.4</spring-ai.version>
         <!-- Dependency versions for security and compatibility -->
         <!-- Upgraded to 2.21.1 to fix GHSA-72hv-8253-57qq (DoS via async parser number length bypass) -->
         <jackson.version>2.21.1</jackson.version>
@@ -46,6 +46,14 @@
 
     <dependencyManagement>
         <dependencies>
+            <!-- Import Spring AI BOM to align Spring AI modules to one version -->
+            <dependency>
+                <groupId>org.springframework.ai</groupId>
+                <artifactId>spring-ai-bom</artifactId>
+                <version>${spring-ai.version}</version>
+                <type>pom</type>
+                <scope>import</scope>
+            </dependency>
             <!-- Import Jackson BOM to align ALL jackson modules to the same version -->
             <!-- Fixes GHSA-72hv-8253-57qq: async parser number length bypass (jackson-core) -->
             <dependency>
@@ -86,7 +94,6 @@
         <dependency>
             <groupId>org.springframework.ai</groupId>
             <artifactId>spring-ai-starter-model-openai</artifactId>
-            <version>${spring-ai.version}</version>
         </dependency>
 
         <dependency>
