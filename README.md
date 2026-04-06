@@ -181,4 +181,4 @@ mvn org.owasp:dependency-check-maven:check
 - Ensure Maven and IDE both use Java 21.
 
 ## License
-This project is licensed under the MIT License. See `LICENSE`.
+This project is licensed under the MIT License. See [LICENSE](./LICENSE).
