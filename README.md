@@ -12,6 +12,7 @@ You can type natural language to:
 - Natural language interactive CLI mode (`cli` profile)
 - LLM intent extraction for `BOOK`, `LIST`, `DELETE`, and `IDENTIFY`
 - Spring AI conversation memory via `MessageChatMemoryAdvisor`
+- BOM-based dependency alignment for Spring AI and Jackson
 - One conversation context per CLI session
 - Stable web conversation context via `X-Conversation-Id` or HTTP session fallback
 - In-memory appointment storage (resets on restart)
@@ -21,7 +22,7 @@ You can type natural language to:
 ## Tech Stack
 - Java 21
 - Spring Boot 3.5.x
-- Spring AI 1.0.3 (OpenAI starter)
+- Spring AI 1.1.4 (OpenAI starter, managed via Spring AI BOM)
 - Springdoc OpenAPI + Swagger UI
 - Lombok
 
@@ -145,6 +146,11 @@ Change model example:
 ```properties
 spring.ai.openai.chat.options.model=gpt-4o-mini
 ```
+
+### Dependency Version Management
+- `org.springframework.ai:spring-ai-bom` is imported in `pom.xml` and controlled by `spring-ai.version` (`1.1.4`).
+- `com.fasterxml.jackson:jackson-bom` is also imported and controlled by `jackson.version` (`2.21.1`).
+- `spring-ai-starter-model-openai` has no explicit `<version>` in dependencies because it is managed by the Spring AI BOM.
 
 ## Swagger/OpenAPI
 - Swagger UI: `http://localhost:8080/swagger-ui/index.html`
