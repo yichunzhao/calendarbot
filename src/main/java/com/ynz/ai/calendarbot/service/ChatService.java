@@ -3,6 +3,7 @@ package com.ynz.ai.calendarbot.service;
 import com.ynz.ai.calendarbot.service.dto.AppointmentRequest;
 import lombok.RequiredArgsConstructor;
 import org.springframework.ai.chat.client.ChatClient;
+import org.springframework.ai.chat.memory.ChatMemory;
 import org.springframework.stereotype.Service;
 
 import java.time.LocalDate;
@@ -17,8 +18,11 @@ public class ChatService {
     private final ChatClient chatClient;
     private final AppointmentService appointmentService;
 
-    public String handleUserMessage(String message) {
+    public String handleUserMessage(String conversationId, String message) {
         String today = LocalDate.now().toString();
+        String effectiveConversationId = isBlank(conversationId)
+                ? ChatMemory.DEFAULT_CONVERSATION_ID
+                : conversationId;
 
         String systemPrompt = String.format("""
                 You are an intelligent scheduling assistant.
@@ -27,7 +31,7 @@ public class ChatService {
 
                 Return JSON with this schema:
                 {
-                  "intent": "BOOK" | "LIST" | "DELETE",
+                  "intent": "BOOK" | "LIST" | "DELETE" | "IDENTIFY",
                   "clientName": "",
                   "clientContact": "",
                   "service": "",
@@ -36,15 +40,19 @@ public class ChatService {
                 }
 
                 Rules:
+                - Use the conversation history to fill in clientName or clientContact if the current message omits them.
                 - Use intent LIST for requests like "show/list my appointments".
                 - Use intent BOOK for scheduling/booking requests.
                 - Use intent DELETE for requests like "cancel/delete/remove my appointment".
+                - Use intent IDENTIFY when the user is only introducing or correcting their name/contact.
                 - For LIST, include clientName/clientContact when available from the user message.
                 - For BOOK, fill all fields.
                 - For DELETE, include clientName/clientContact, date, and time.
+                - For IDENTIFY, include any provided clientName/clientContact and leave the other fields empty.
                 """, today);
 
         AppointmentRequest request = chatClient.prompt()
+                .advisors(advisor -> advisor.param(ChatMemory.CONVERSATION_ID, effectiveConversationId))
                 .system(systemPrompt)
                 .user(message)
                 .call()
@@ -55,14 +63,28 @@ public class ChatService {
         }
 
         String intent = normalizeIntent(request.getIntent());
-        if ("LIST".equals(intent)) {
-            return handleListIntent(request);
-        }
-        if ("DELETE".equals(intent)) {
-            return handleDeleteIntent(request);
+        return switch (intent) {
+            case "LIST" -> handleListIntent(request);
+            case "DELETE" -> handleDeleteIntent(request);
+            case "IDENTIFY" -> handleIdentifyIntent(request);
+            default -> handleBookIntent(request);
+        };
+
+    }
+
+    private String handleIdentifyIntent(AppointmentRequest request) {
+        if (isBlank(request.getClientName()) && isBlank(request.getClientContact())) {
+            return "Thanks. I'll remember your details for this conversation.";
         }
 
-        return handleBookIntent(request);
+        if (!isBlank(request.getClientName()) && !isBlank(request.getClientContact())) {
+            return "Thanks, " + request.getClientName() + ". I'll remember your contact as "
+                    + request.getClientContact() + " for this conversation.";
+        }
+        if (!isBlank(request.getClientName())) {
+            return "Thanks, " + request.getClientName() + ". I'll remember you for this conversation.";
+        }
+        return "Thanks. I'll remember your contact as " + request.getClientContact() + " for this conversation.";
     }
 
     private String handleBookIntent(AppointmentRequest request) {

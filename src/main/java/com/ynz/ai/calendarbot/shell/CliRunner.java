@@ -8,6 +8,7 @@ import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Component;
 
 import java.util.Scanner;
+import java.util.UUID;
 
 @Component
 @Profile("cli")
@@ -20,6 +21,7 @@ public class CliRunner implements ApplicationRunner {
     public void run(ApplicationArguments args) {
         printBanner();
         Scanner scanner = new Scanner(System.in);
+        String conversationId = UUID.randomUUID().toString();
 
         while (true) {
             System.out.print("calendarbot:> ");
@@ -37,7 +39,7 @@ public class CliRunner implements ApplicationRunner {
 
             System.out.println("⏳ Thinking...");
             try {
-                String response = chatService.handleUserMessage(input);
+                String response = chatService.handleUserMessage(conversationId, input);
                 System.out.println(response);
             } catch (Exception e) {
                 System.out.println("⚠️  Error: " + e.getMessage());
