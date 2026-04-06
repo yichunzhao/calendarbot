@@ -4,13 +4,18 @@ AI-powered appointment assistant built with Spring Boot and Spring AI.
 You can type natural language to:
 - book appointments,
 - list a user's appointments,
-- cancel appointments.
+- cancel appointments,
+- introduce yourself once and let the assistant remember your name/contact during the current conversation.
 
 ## Features
 - Natural language chat via REST `POST /chat`
 - Natural language interactive CLI mode (`cli` profile)
-- LLM intent extraction for `BOOK`, `LIST`, and `DELETE`
+- LLM intent extraction for `BOOK`, `LIST`, `DELETE`, and `IDENTIFY`
+- Spring AI conversation memory via `MessageChatMemoryAdvisor`
+- One conversation context per CLI session
+- Stable web conversation context via `X-Conversation-Id` or HTTP session fallback
 - In-memory appointment storage (resets on restart)
+- In-memory conversation memory (resets on restart)
 - Swagger/OpenAPI documentation
 
 ## Tech Stack
@@ -62,22 +67,34 @@ java -jar target/calendarbot-1.0-SNAPSHOT.jar --spring.profiles.active=cli
 The app supports these intents through both REST and CLI:
 
 - `BOOK`: create an appointment
-  - provide name/contact + service + date + time
+  - provide service + date + time
+  - name/contact can come from the current message or remembered conversation context
 - `LIST`: list current user's appointments
-  - provide name and/or contact
+  - provide name and/or contact, either directly or from remembered context
 - `DELETE`: cancel one appointment
-  - provide name/contact + date + time
+  - provide date + time and enough identity information to match the booking
+- `IDENTIFY`: introduce or correct your name/contact for the current conversation
+  - examples: `I am Yichun`, `My email is yichun@mail.com`
+
+Conversation memory is scoped to the current conversation only:
+
+- **CLI**: one memory window per REPL session
+- **REST**: one memory window per `X-Conversation-Id` value, or per HTTP session if that header is omitted
+- Memory is **not persisted** across application restarts
 
 ## CLI Examples
 ```text
-calendarbot:> book a cleaning for Alice (alice@mail.com) on 2026-04-10 at 10:00
+calendarbot:> I am Yichun
+Thanks, Yichun. I'll remember you for this conversation.
+
+calendarbot:> book a cleaning for me on 2026-04-10 at 10:00
 Your appointment is scheduled for 2026-04-10 at 10:00
 
-calendarbot:> list appointments for alice@mail.com
-Appointments for alice@mail.com:
+calendarbot:> list my appointments
+Appointments for Yichun:
 1) 2026-04-10 10:00 - Cleaning
 
-calendarbot:> cancel my appointment for alice@mail.com on 2026-04-10 at 10:00
+calendarbot:> cancel my appointment on 2026-04-10 at 10:00
 Your appointment on 2026-04-10 at 10:00 has been cancelled.
 ```
 
@@ -91,9 +108,30 @@ Exit CLI with:
 - `Content-Type: text/plain`
 - Body: any natural language message
 
-Example:
+### Conversation context
+- Optional request header: `X-Conversation-Id`
+- If provided, the same header value should be reused on follow-up requests so the assistant remembers earlier messages
+- If omitted, the app falls back to the current HTTP session id
+- The response echoes the effective `X-Conversation-Id` header
+
+Single request example:
 ```powershell
 curl -X POST http://localhost:8080/chat -H "Content-Type: text/plain" -d "list appointments for alice@mail.com"
+```
+
+Multi-turn example with remembered identity:
+```powershell
+$conversationId = "demo-yichun"
+
+curl -X POST http://localhost:8080/chat `
+  -H "Content-Type: text/plain" `
+  -H "X-Conversation-Id: $conversationId" `
+  -d "I am Yichun"
+
+curl -X POST http://localhost:8080/chat `
+  -H "Content-Type: text/plain" `
+  -H "X-Conversation-Id: $conversationId" `
+  -d "list my appointments"
 ```
 
 ## Configuration
@@ -114,9 +152,10 @@ spring.ai.openai.chat.options.model=gpt-4o-mini
 
 ## Architecture
 - `CalendarBot` - Spring Boot entry point
-- `ChatController` - REST endpoint for `/chat` (non-`cli` profile)
-- `CliRunner` - terminal REPL in `cli` profile
-- `ChatService` - LLM prompt + intent routing (`BOOK`/`LIST`/`DELETE`)
+- `AiConfig` - configures `ChatMemory` and the memory-enabled `ChatClient`
+- `ChatController` - REST endpoint for `/chat` (non-`cli` profile), including conversation-id handling
+- `CliRunner` - terminal REPL in `cli` profile; reuses one conversation id for the full session
+- `ChatService` - LLM prompt + intent routing (`BOOK`/`LIST`/`DELETE`/`IDENTIFY`)
 - `AppointmentService` - booking/listing/cancel contract
 - `InMemoryAppointmentService` - in-memory implementation
 - `AppointmentRequest` - DTO used for extraction and scheduling data
@@ -131,6 +170,8 @@ mvn org.owasp:dependency-check-maven:check
 ## Troubleshooting
 - If you see `No command found for '--spring.profiles.active=cli'`, set profile via environment variable before `mvn spring-boot:run`.
 - Appointments are in-memory only and reset after restart.
+- Conversation memory is also in-memory only and resets after restart or when you start a new CLI process with a fresh conversation id.
+- For REST clients, reuse the same `X-Conversation-Id` across related requests if you want the assistant to remember prior turns.
 - Ensure Maven and IDE both use Java 21.
 
 ## License
