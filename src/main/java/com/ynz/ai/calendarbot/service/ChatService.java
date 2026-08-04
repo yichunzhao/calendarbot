@@ -15,13 +15,15 @@ import java.util.Objects;
 @RequiredArgsConstructor
 public class ChatService {
 
+    private static final String FALLBACK_CONVERSATION_ID = "calendarbot-default";
+
     private final ChatClient chatClient;
     private final AppointmentService appointmentService;
 
     public String handleUserMessage(String conversationId, String message) {
         String today = LocalDate.now().toString();
         String effectiveConversationId = isBlank(conversationId)
-                ? ChatMemory.DEFAULT_CONVERSATION_ID
+                ? FALLBACK_CONVERSATION_ID
                 : conversationId;
 
         String systemPrompt = String.format("""
